@@ -1,0 +1,133 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div id="wrapper">
+        <div id="container">
+            <button id="startExecution" type="button" class="btn btn-primary">Ejecutar Simulación</button>
+
+            <div style="display: none;" id="results">
+                <div id="totalPath"></div>
+                <div id="cardinalPointFrequency"></div>
+                <div id="graphic"></div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    const startExecutionButton = document.getElementById('startExecution'),
+          resultsDiv = document.getElementById('results'),
+          graphic = document.getElementById('graphic'),
+          totalPath = document.getElementById('totalPath'),
+          cardinalPointFrequency = document.getElementById('cardinalPointFrequency'),
+          cardinalPoint = ['Norte', 'Sud', 'Este', 'Oeste'];
+
+    let numCall;
+
+    startExecutionButton.onclick = startExecution;
+    google.charts.load('current', {'packages':['corechart']});
+
+    function startExecution() {
+        numCall = 1;
+
+        // Reset interface
+        resultsDiv.style.display = "none";
+
+        const calls = setInterval(function() {
+
+            const params = {
+                'name_simulator': 'nuptic-43',
+                'num': numCall,
+                'cardinal_point': cardinalPoint[Math.floor(Math.random() * 4)],
+                'path': Math.floor(Math.random() * 10) + 11,
+            };
+
+            ajaxCalls(JSON.stringify( params ));
+
+            if(numCall === 60) window.clearInterval(calls);
+            else numCall++;
+        }, 1000);
+    }
+
+    function ajaxCalls(param) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '{{ path('api_simulator') }}');
+        xhr.onload = function() {
+
+            if (xhr.status === 200) {
+                if (JSON.parse(xhr.responseText).res === 'ko') {
+                    numCall--;
+                } else {// if (JSON.parse(xhr.responseText).closed) {
+                    showInfo(JSON.parse(xhr.responseText).res);
+                }
+            }
+            else {
+                numCall--;
+                alert('Request failed.  Returned status of ' + xhr.status);
+            }
+        };
+        xhr.send(param);
+    }
+
+    function showInfo(results) {
+
+        const res = dealData(results);
+
+        showGeneralInfo(res);
+        showGraphic(res);
+        resultsDiv.style.display = "block";
+    }
+
+    function showGraphic(param) {
+
+        let res = [];
+        res.push(['Task', 'Cardinal Points per Path']);
+
+        for(let key in param.res) {
+            res.push([key, param.res[key].path])
+        }
+
+        const data = google.visualization.arrayToDataTable(res),
+            options = {'title':'Cardinal Points / Path', 'width':550, 'height':400},
+            chart = new google.visualization.PieChart(graphic);
+
+        chart.draw(data, options);
+    }
+
+    function showGeneralInfo(data) {
+        let mostFrequent = '', maxAppearances = 0;
+        for (let key in data.res) {
+            if(data.res[key]['numAppearances'] > maxAppearances ) {
+                maxAppearances = data.res[key]['numAppearances'];
+                mostFrequent = key;
+            }
+            else if(data.res[key]['numAppearances'] === maxAppearances ) mostFrequent += ' and ' + key;
+        }
+
+        cardinalPointFrequency.innerHTML = mostFrequent;
+        totalPath.innerHTML = data.totalPath;
+    }
+
+    function dealData(params) {
+
+        let res = [],
+            totalPath = 0;
+
+        for (let data of cardinalPoint) {
+            res[data] = [];
+            res[data]['path'] = 0;
+            res[data]['numAppearances'] = 0;
+        }
+
+        for (let data of params) {
+            totalPath += parseInt(data['path']);
+            res[data['cardinal_point']]['path'] += parseInt(data['path']);
+            res[data['cardinal_point']]['numAppearances']++;
+        }
+
+        return {'res': res, 'totalPath': totalPath};
+    }
+</script>
+{% endblock %}

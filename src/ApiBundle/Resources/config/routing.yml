@@ -1,0 +1,5 @@
+api_simulator:
+    type: rest
+    resource: @ApiBundle/Controller/SimulatorController.php
+    name_prefix: api_
+    method: POST

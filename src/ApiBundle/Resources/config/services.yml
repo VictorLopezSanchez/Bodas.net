@@ -1,0 +1,28 @@
+services:
+
+    #######################################################################
+    ####                        Controllers                             ###
+    #######################################################################
+
+    api.simulator_controller:
+        class: ApiBundle\Controller\SimulatorController
+
+    #######################################################################
+    ####                            Services                            ###
+    #######################################################################
+
+    api.simulator_service:
+        class: ApiBundle\Services\SimulatorService
+        arguments: [ @api.log_history_repository, @logger, @service_container ]
+        tags:
+            - { name: monolog.logger, channel: bodas }
+
+    #######################################################################
+    ####                          Repositories                          ###
+    #######################################################################
+
+    api.log_history_repository:
+        class: ApiBundle\Repository\LogHistoryRepository
+        factory: [@doctrine.orm.default_entity_manager, getRepository]
+        arguments:
+            - ApiBundle\Entity\LogHistory

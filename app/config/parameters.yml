@@ -1,0 +1,13 @@
+# This file is auto-generated during the composer install
+parameters:
+    database_host: 127.0.0.1
+    database_port: 3306
+    database_name: bodas
+    database_user: newuser
+    database_password: Password123&
+    mailer_transport: smtp
+    mailer_host: 127.0.0.1
+    mailer_user: victorlopezsanchezz@gmail.com
+    mailer_password: victorlopezsanchezz@gmail.com
+    secret: 2db99cb64dbea70d6c00590f77a4f3575fa8f448
+    redis_host: 'redis://127.0.0.1/1'
